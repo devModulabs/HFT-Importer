@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabla de Productos</title>
+    <!-- Agregar enlace al archivo de estilo de Bootstrap -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body class="container mt-5">
+
+    <h1 class="mb-4">Lista de Productos</h1>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>URL Product Link</th>
+                <th>URL Resolver Postman</th>
+                <th>Response</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="tablaProductos">
+            <!-- Aquí se mostrarán los datos de la tabla -->
+        </tbody>
+    </table>
+
+    <script>
+        // Función para cargar y mostrar los datos en la tabla
+        function cargarDatos() {
+            // Hacer la solicitud (fetch) al servicio
+            fetch('https://api.ferredepot.com/api/c5056f8311714079b3f1d059e3a2038d/products')
+                .then(response => response.json())
+                .then(data => {
+                    // Obtener la referencia a la tabla en el HTML
+                    const tablaProductos = document.getElementById('tablaProductos');
+
+                    // Limpiar la tabla antes de agregar nuevos datos
+                    tablaProductos.innerHTML = '';
+
+                    // Filtrar solo los productos que no tienen datos en URLRESOLVER_RESPONSE
+                    const productosSinDatos = data.filter(producto => !producto.urlresolver_response);
+
+                    // Iterar sobre los productos sin datos y agregarlos a la tabla
+                    productosSinDatos.forEach(producto => {
+                        const fila = document.createElement('tr');
+                        fila.innerHTML = `
+                            <td>${producto.id}</td>
+                            <td>${producto.urlresolver_url}</td>
+                            <td><button class="btn btn-primary" onclick="abrirVentana('${producto.urlresolver_postman}')">Abrir</button></td>
+                            <td><input class="form-control" type="text" value="" id="textoPersonalizado_${producto.id}"></td>
+                            <td><button class="btn btn-success" onclick="guardarDatos(${producto.id})">Guardar</button></td>
+                        `;
+                        tablaProductos.appendChild(fila);
+                    });
+                })
+                .catch(error => console.error('Error al obtener datos:', error));
+        }
+
+        // Función para abrir la ventana al hacer clic en el botón
+        function abrirVentana(url) {
+            window.open(url, '_blank');
+        }
+
+        // Función para guardar datos al hacer clic en el botón "Guardar"
+        function guardarDatos(id) {
+            const textoPersonalizado = document.getElementById(`textoPersonalizado_${id}`).value;
+
+            // Hacer una solicitud tipo POST solo si el texto personalizado no está vacío
+            if (textoPersonalizado.trim() !== '') {
+                fetch(`https://api.ferredepot.com/api/c5056f8311714079b3f1d059e3a2038d/products/update/${id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer bAorLxLaJywMqlztngUvdCGy2CL9T7pq0uPPlpNv'
+                    },
+                    body: JSON.stringify({
+                        urlresolver_response: textoPersonalizado
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Manejar la respuesta si es necesario
+                    console.log('Respuesta del servidor:', data);
+                    // Recargar la página para actualizar la tabla
+                    location.reload();
+                })
+                .catch(error => console.error('Error al enviar datos:', error));
+            }
+        }
+
+        // Cargar datos al cargar la página
+        cargarDatos();
+    </script>
+
+    <!-- Agregar enlace al archivo de script de Bootstrap (jQuery y Popper.js son necesarios para Bootstrap) -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+</body>
+</html>
